@@ -1,23 +1,33 @@
-import os
-import google.oauth2.credentials
+import httplib2
+import sys
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from google_auth_oauthlib.flow import InstalledAppFlow
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.file import Storage
+from oauth2client.tools import argparser, run_flow
 
+#Se requiere que el archivo cliente_secret.json, expecificar ruta de ser necesario
 archivo_cliente = 'client_secret.json'
-scopes = ['https://www.googleapis.com/auth/youtube.force-ssl']
-api_service = 'youtube'
-api_version = 'v3'
+scope = ['https://www.googleapis.com/auth/youtube.readonly']
+service = 'youtube'
+ver = 'v3'
 
-def auth_service():
-    flow = InstalledAppFlow.from_client_secrets_file(archivo_cliente,scopes)
-    credenciales = flow.run_console()
-    return build(api_service, api_version,credentials=credenciales)
+#Funcion para crear un servicio de youtube
+def autenficar():
 
+    #Extrae los archivos secretos
+    flow = flow_from_clientsecrets(archivo_cliente, scope=scope)
+    almacenamiento = Storage('%s-oauth2.json' % sys.argv[0])
+    credenciales = almacenamiento.get()
+
+    #Verifica si hay algun archivo previo con credenciales
+    if credenciales is None or credenciales.invalid:
+        band = argparser.parse_args()
+        credenciales = run_flow(flow, almacenamiento, band)
+
+    #returna un servicio de youtube
+    return build(service, ver, http=credenciales.authorize(httplib2.Http()))
+
+
+#En caso de añadir a otro archivo, eliminar el siguiente if
 if __name__ == '__main__':
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    service = auth_service()
-    result = service.channels().list('snippet,contentDetails,statistics').execute()
-    print(result)
-
-
+    yt = autenficar()
