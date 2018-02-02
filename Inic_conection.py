@@ -17,7 +17,7 @@ def auth_service():
 if __name__ == '__main__':
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     service = auth_service()
-    result = service.channels().list('snippet,contenteDetails,statistics').execute()
+    result = service.channels().list('snippet,contentDetails,statistics').execute()
     print(result)
 
 
